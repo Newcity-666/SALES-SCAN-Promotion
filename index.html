@@ -2,12 +2,31 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- ล็อกขนาดหน้าจอ ป้องกันการซูมเข้า-ออก -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SALES SCAN PROMOTION</title>
   
   <style>
-    * { box-sizing: border-box; }
-    html, body { -webkit-text-size-adjust: 100%; }
+    * { 
+      box-sizing: border-box; 
+      /* ป้องกัน Double Tap Zoom และการซูมด้วยนิ้ว */
+      touch-action: manipulation;
+      -webkit-user-select: none; /* ป้องกันการคลุมดำข้อความ */
+      user-select: none;
+    }
+    
+    /* ยกเว้นช่องกรอกสาขาให้คลิกพิมพ์ได้ปกติ */
+    input[type="text"] {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    html, body { 
+      -webkit-text-size-adjust: 100%; 
+      overflow-x: hidden;
+      width: 100%;
+      height: 100%;
+    }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef2f5; padding: 8px; margin: 0; font-size: 15px; }
     
     .card { background: #ffffff; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 440px; margin: 5px auto; padding: 14px; border: 1px solid #dcdfe6; }
@@ -72,7 +91,7 @@
     <datalist id="branch-list"></datalist>
   </div>
 
-  <!-- ซ่อนช่องนี้ไว้เพื่อใช้รับค่าจากปืนสแกนบาร์โค้ดเท่านั้น -->
+  <!-- ช่องรับค่าบาร์โค้ดแบบซ่อน -->
   <input type="text" id="barcode-input" class="hidden-barcode-input" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)">
 
   <div style="margin-top: 14px; font-weight: bold; font-size: 15px;">
@@ -125,12 +144,19 @@
 </div>
 
 <script>
+  // 📌 ป้องกัน Double-Tap Zoom และ Pinch Zoom บนหน้าเว็บ
   let lastTouchEnd = 0;
   document.addEventListener('touchend', function (e) {
     const now = (new Date()).getTime();
-    if (now - lastTouchEnd <= 300) e.preventDefault();
+    if (now - lastTouchEnd <= 300) {
+      e.preventDefault();
+    }
     lastTouchEnd = now;
   }, false);
+
+  document.addEventListener('gesturestart', function (e) {
+    e.preventDefault();
+  });
 
   const API_URL = "https://script.google.com/macros/s/AKfycbw8V1d7yMEoVUgVO4wvfpIwiABT7JuL3zhuDJEXeTMKP4IGOYScFEN2ArDeWPnLqRLwqA/exec";
 
