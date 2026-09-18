@@ -43,8 +43,19 @@
       border: 1px solid #dcdfe6; 
     }
     
-    .header-title { background: #1a365d; color: white; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; margin: -14px -14px 12px -14px; }
+    .header-title { 
+      background: #1a365d; 
+      color: white; 
+      padding: 10px 14px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-radius: 8px 8px 0 0; 
+      margin: -14px -14px 12px -14px; 
+    }
     .header-text { font-weight: bold; font-size: 17px; }
+    .user-email-tag { font-size: 11px; color: #cbd5e0; margin-top: 2px; font-weight: normal; }
+    
     .btn-header-history { background: #2b6cb0; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-header-history:active { background: #4299e1; }
     
@@ -100,7 +111,11 @@
 
 <div class="card">
   <div class="header-title">
-    <span class="header-text">SALES SCAN PROMOTION</span>
+    <div>
+      <div class="header-text">SALES SCAN PROMOTION</div>
+      <!-- แสดง Email ของคนที่ล็อกอิน Google เข้าใช้งาน -->
+      <div class="user-email-tag">👤 <?= userEmail ?></div>
+    </div>
     <button class="btn-header-history" onclick="openHistoryModal()">📜 ประวัติ</button>
   </div>
   
@@ -137,7 +152,7 @@
 <div id="summaryModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-title">📋 สรุปรายการ</div>
-    <div class="summary-info"><b>สาขา:</b> <span id="summary-branch">-</span></div>
+    <div class="summary-info"><b>รายการ/สาขา:</b> <span id="summary-branch">-</span></div>
     <div class="summary-list" id="summary-items-list"></div>
     <div class="summary-total">จำนวนรวมทั้งหมด: <span id="summary-total-qty">0</span> ชิ้น</div>
     <div class="modal-actions">
@@ -150,7 +165,7 @@
 <div id="historyModal" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-title">📜 ประวัติการทำรายการ</div>
-    <div class="summary-info"><b>สาขา:</b> <span id="history-branch">-</span></div>
+    <div class="summary-info"><b>รายการ/สาขา:</b> <span id="history-branch">-</span></div>
     
     <div class="summary-list" id="history-items-container" style="max-height: 350px;">
     </div>
@@ -173,7 +188,8 @@
     e.preventDefault();
   });
 
-  const API_URL = "https://script.google.com/macros/s/AKfycbw8V1d7yMEoVUgVO4wvfpIwiABT7JuL3zhuDJEXeTMKP4IGOYScFEN2ArDeWPnLqRLwqA/exec";
+  // เปลี่ยนเป็น URL แบบ Dynamic เรียกจากตัว Apps Script โดยตรง
+  const API_URL = "<?= ScriptApp.getService().getUrl() ?>";
 
   let cart = [];
   const scannedCache = {};
@@ -238,7 +254,7 @@
           });
         }
       })
-      .catch(err => console.error("ไม่สามารถโหลดข้อมูลสาขาได้:", err));
+      .catch(err => console.error("ไม่สามารถโหลดข้อมูลรายการได้:", err));
   }
 
   function isBranchValid(branchName) {
@@ -383,12 +399,12 @@
     const branch = document.getElementById('branch-input').value.trim();
     
     if (!branch) {
-      alert("กรุณากรอกสาขา");
+      alert("กรุณากรอกชื่อรายการ");
       return;
     }
 
     if (!isBranchValid(branch)) {
-      alert("ไม่พบสาขาที่ระบุ กรุณาตรวจสอบชื่อสาขาอีกครั้ง");
+      alert("ไม่พบชื่อรายการที่ระบุ กรุณาตรวจสอบอีกครั้ง");
       return;
     }
 
@@ -440,12 +456,12 @@
     const branch = document.getElementById('branch-input').value.trim();
     
     if (!branch) {
-      alert("กรุณากรอกสาขา");
+      alert("กรุณากรอกชื่อรายการ");
       return;
     }
 
     if (!isBranchValid(branch)) { 
-      alert("ไม่พบสาขาที่ระบุ กรุณาตรวจสอบชื่อสาขาอีกครั้ง"); 
+      alert("ไม่พบชื่อรายการที่ระบุ กรุณาตรวจสอบอีกครั้ง"); 
       return; 
     }
 
@@ -542,7 +558,7 @@
     .catch(err => {
       btnConfirm.disabled = false;
       btnConfirm.innerText = "ยืนยันจบบิล";
-      alert("ไม่สามารถบันทึกได้ โปรดตรวจสอบอินเทอร์เน็ตหรือ Web App URL");
+      alert("ไม่สามารถบันทึกได้ โปรดตรวจสอบอินเทอร์เน็ตหรือสิทธิ์การเข้าใช้งาน");
     });
   }
 </script>
