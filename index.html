@@ -24,8 +24,8 @@
     
     .scanner-status-box { background: #ebf8ff; border: 2px dashed #3182ce; padding: 10px; border-radius: 8px; text-align: center; color: #2b6cb0; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
 
-    .action-buttons { display: flex; gap: 8px; margin-top: 10px; }
-    .btn-finish { flex: 1; background: #38a169; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .action-buttons { display: flex; gap: 8px; margin-top: 14px; }
+    .btn-finish { flex: 1; background: #38a169; color: white; border: none; padding: 14px; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; }
     .btn-finish:disabled { background: #cbd5e0; color: #718096; cursor: not-allowed; }
 
     .cart-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
@@ -67,21 +67,17 @@
   
   <div class="form-group">
     <label for="branch-input">ชื่อรายการ:</label>
-    <input type="text" id="branch-input" list="branch-list" placeholder="-- กรอกสาขา --">
+    <input type="text" id="branch-input" list="branch-list" placeholder="-- กรอกชื่อรายการ --">
     <datalist id="branch-list"></datalist>
   </div>
 
   <div class="form-group">
-    <label>Barcode:</label>
+    <label>สถานะสแกนเนอร์:</label>
     <div class="scanner-status-box">
-      SCAN
+      SCAN BARCODE
     </div>
-    <!-- inputmode="none" ช่วยป้องกันคีย์บอร์ดมือถือ/แท็บเล็ตเด้งขึ้นมา -->
-    <input type="text" id="barcode-input" placeholder="ยิงสแกนบาร์โค้ดที่นี่..." inputmode="none" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)">
-  </div>
-
-  <div class="action-buttons">
-    <button class="btn-finish" id="btnSubmit" onclick="openSummaryModal()">จบบิล</button>
+    <!-- ช่องอินพุตแบบซ่อนไว้แต่คอยรับค่าสแกนเนอร์ -->
+    <input type="text" id="barcode-input" placeholder="BARCODE" inputmode="none" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)">
   </div>
 
   <div style="margin-top: 14px; font-weight: bold; font-size: 15px;">
@@ -100,6 +96,11 @@
     </thead>
     <tbody id="cart-list"></tbody>
   </table>
+
+  <!-- ปุ่มจบบิล ย้ายมาอยู่ล่างสุด -->
+  <div class="action-buttons">
+    <button class="btn-finish" id="btnSubmit" onclick="openSummaryModal()">จบบิล</button>
+  </div>
 </div>
 
 <!-- Modal สรุปรายการก่อนยืนยัน -->
@@ -142,22 +143,52 @@
   let cart = [];
   const scannedCache = {};
   let availableStores = [];
+  let barcodeBuffer = "";
+  let barcodeTimer = null;
 
   window.onload = function() { 
     loadStoreList(); 
     focusBarcodeScanner();
 
-    // ให้ช่องบาร์โค้ดแอ็กทีฟตลอดเวลา เพื่อรองรับการยิงสแกนต่อเนื่อง
+    // ดึง focus คืนทันทีเมื่อมีการคลิกพื้นที่อื่น (ยกเว้นกำลังพิมพ์สาขา)
     document.addEventListener('click', function(e) {
-      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+      if (e.target.id !== 'branch-input') {
         focusBarcodeScanner();
       }
     });
   };
 
+  // ดักจับการยิงเครื่องสแกนระดับ Global (รองรับการยิงสแกนโดยไม่ต้องกดคลิกที่ช่องอินพุตก่อน)
+  document.addEventListener('keydown', function(e) {
+    const summaryModalVisible = document.getElementById('summaryModal').style.display === 'flex';
+    const historyModalVisible = document.getElementById('historyModal').style.display === 'flex';
+    
+    // หากเปิด Modal อยู่ หรือกำลังพิมพ์ชื่อสาขา ให้ข้ามการดักจับไป
+    if (summaryModalVisible || historyModalVisible || document.activeElement.id === 'branch-input') {
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      if (barcodeBuffer.trim().length > 0) {
+        addBarcodeToCartImmediate(barcodeBuffer.trim(), 1);
+        barcodeBuffer = "";
+        document.getElementById('barcode-input').value = "";
+      }
+    } else if (e.key.length === 1) { // เก็บรวบรวมตัวอักษรที่ปืนสแกนเนอร์ส่งเข้ามา
+      barcodeBuffer += e.key;
+      clearTimeout(barcodeTimer);
+      barcodeTimer = setTimeout(() => { barcodeBuffer = ""; }, 200); // รีเซ็ตบาร์โค้ดหากทิ้งช่วงเกิน 200ms
+    }
+  });
+
   function focusBarcodeScanner() {
-    const input = document.getElementById('barcode-input');
-    if (input) input.focus();
+    const summaryModalVisible = document.getElementById('summaryModal').style.display === 'flex';
+    const historyModalVisible = document.getElementById('historyModal').style.display === 'flex';
+    
+    if (!summaryModalVisible && !historyModalVisible && document.activeElement.id !== 'branch-input') {
+      const input = document.getElementById('barcode-input');
+      if (input) input.focus();
+    }
   }
   
   function loadStoreList() {
@@ -183,20 +214,20 @@
     return availableStores.includes(branchName);
   }
 
-  // เมื่อเครื่องสแกนยิงข้อมูลเข้ามาแล้วส่ง Enter
+  // รองรับกรณีที่ Focus อยู่ในช่อง input โดยตรง
   function handleInputBarcodeKeyDown(event) {
     if (event.key === 'Enter' || event.keyCode === 13) {
       event.preventDefault();
       const barcodeText = event.target.value.trim();
       if (barcodeText) {
         addBarcodeToCartImmediate(barcodeText, 1);
-        event.target.value = ''; // เคลียร์ช่องเพื่อรอสแกนชิ้นถัดไป
+        event.target.value = '';
+        barcodeBuffer = "";
       }
       focusBarcodeScanner();
     }
   }
 
-  // เพิ่มสินค้าเข้าบิลทันทีเมื่อสแกน
   function addBarcodeToCartImmediate(barcode, qty) {
     const existingIndex = cart.findIndex(item => item.barcode === barcode);
     if (existingIndex > -1) {
