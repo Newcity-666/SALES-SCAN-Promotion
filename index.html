@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SALES SCAN PROMOTION</title>
   
-  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
-  <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
-  
   <style>
     * { box-sizing: border-box; }
     html, body { -webkit-text-size-adjust: 100%; }
@@ -25,41 +22,9 @@
     
     input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px !important; outline: none; }
     
-    .scanner-container { position: relative; width: 100%; height: 250px; background: #000; border-radius: 8px; overflow: hidden; display: none; margin-bottom: 10px; }
-    .scanner-container video, .scanner-container canvas { width: 100%; height: 100%; object-fit: cover; }
-    canvas.drawingBuffer { position: absolute; top: 0; left: 0; }
+    .scanner-status-box { background: #ebf8ff; border: 2px dashed #3182ce; padding: 10px; border-radius: 8px; text-align: center; color: #2b6cb0; font-weight: bold; margin-bottom: 8px; font-size: 14px; }
 
-    .scanner-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
-    .scanner-guide { position: absolute; left: 12%; right: 12%; top: 25%; height: 50%; border: 2px solid rgba(255,255,255,0.9); border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.28); }
-    .scanner-guide::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: red; box-shadow: 0 0 8px red; animation: scan 1.2s infinite alternate; }
-    .scanner-hint { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; color: white; font-size: 13px; font-weight: 600; text-shadow: 0 1px 3px #000; padding: 0 4px; }
-    @keyframes scan { 0% { transform: translateY(-55px); } 100% { transform: translateY(55px); } }
-
-    .scan-btn-group { display: flex; gap: 8px; flex-direction: column; }
-    .btn-scan { width: 100%; background: #2b6cb0; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; }
-    .btn-scan.active { background: #e53e3e; }
-    
-    .btn-file-upload { width: 100%; background: #4a5568; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; text-align: center; display: inline-block; }
-    .btn-file-upload:active { background: #2d3748; }
-
-    .photo-preview-box { position: relative; width: 120px; margin: 8px auto; display: none; text-align: center; border: 2px solid #38a169; border-radius: 8px; padding: 2px; background: #000; box-shadow: 0 0 8px rgba(56, 161, 105, 0.5); }
-    .photo-preview-box.error { border-color: #e53e3e; box-shadow: 0 0 8px rgba(229, 62, 62, 0.5); }
-    .photo-preview-box canvas { width: 100%; height: auto; border-radius: 4px; display: block; margin: 0 auto; }
-
-    .info-card { background: #f8fafc; border: 2px solid #cbd5e0; border-radius: 8px; padding: 12px; margin: 12px 0; }
-    .info-row { display: flex; margin-bottom: 6px; font-size: 16px; }
-    .info-row:last-child { margin-bottom: 0; }
-    .info-label { width: 75px; font-weight: bold; color: #4a5568; }
-    .info-value { flex: 1; color: #000000; font-weight: bold; word-break: break-word; font-size: 17px; }
-
-    .qty-container { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .qty-control { display: flex; align-items: center; gap: 6px; }
-    .qty-input { width: 80px !important; text-align: center; font-weight: bold; font-size: 20px !important; padding: 6px !important; height: 45px; }
-    .btn-qty { width: 45px; height: 45px; background: #cbd5e0; color: #2d3748; border: none; border-radius: 6px; font-size: 22px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none; }
-    .btn-qty:active { background: #a0aec0; }
-
-    .action-buttons { display: flex; gap: 8px; }
-    .btn-add { flex: 1; background: #319795; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .action-buttons { display: flex; gap: 8px; margin-top: 10px; }
     .btn-finish { flex: 1; background: #38a169; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
     .btn-finish:disabled { background: #cbd5e0; color: #718096; cursor: not-allowed; }
 
@@ -101,62 +66,26 @@
   </div>
   
   <div class="form-group">
-    <label for="branch-input">สาขา:</label>
+    <label for="branch-input">ชื่อรายการ:</label>
     <input type="text" id="branch-input" list="branch-list" placeholder="-- กรอกสาขา --">
     <datalist id="branch-list"></datalist>
   </div>
 
   <div class="form-group">
-    <label>สแกนบาร์โค้ด:</label>
-    
-    <div id="scanner-box" class="scanner-container">
-      <div class="scanner-overlay">
-        <div class="scanner-guide"></div>
-        <div id="scanner-hint" class="scanner-hint">วาง Barcode ให้เต็มกรอบ</div>
-      </div>
+    <label>Barcode:</label>
+    <div class="scanner-status-box">
+      SCAN
     </div>
-
-    <div class="scan-btn-group">
-      <button id="btnToggleScan" class="btn-scan" onclick="toggleScanner()">📷 Scan Barcode</button>
-      
-      <label for="image-input" class="btn-file-upload">📸 ถ่ายภาพ (กรณี Scan ไม่ติด)</label>
-      <input type="file" id="image-input" accept="image/*" capture="environment" style="display: none;" onchange="handlePhotoUpload(this)">
-    </div>
-
-    <div id="photo-preview-box" class="photo-preview-box">
-      <canvas id="photo-canvas"></canvas>
-    </div>
-    
-    <input type="text" id="barcode-input" style="margin-top: 8px;" placeholder="กรอก Barcode" onkeydown="handleInputBarcodeKeyDown(event)" onblur="handleInputBarcodeBlur(this.value)">
-  </div>
-
-  <div class="info-card">
-    <div class="info-row">
-      <span class="info-label">SKU:</span>
-      <span class="info-value" id="display-sku">-</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">สินค้า:</span>
-      <span class="info-value" id="display-product">-</span>
-    </div>
-  </div>
-
-  <div class="qty-container">
-    <label style="margin:0; font-size: 16px;">จำนวน:</label>
-    <div class="qty-control">
-      <button type="button" class="btn-qty" onclick="changeQty(-1)">-</button>
-      <input type="number" id="qty-input" class="qty-input" value="1" min="1" onfocus="handleQtyFocus(this)" onblur="handleQtyBlur(this)">
-      <button type="button" class="btn-qty" onclick="changeQty(1)">+</button>
-    </div>
+    <!-- inputmode="none" ช่วยป้องกันคีย์บอร์ดมือถือ/แท็บเล็ตเด้งขึ้นมา -->
+    <input type="text" id="barcode-input" placeholder="ยิงสแกนบาร์โค้ดที่นี่..." inputmode="none" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)">
   </div>
 
   <div class="action-buttons">
-    <button class="btn-add" id="btnAdd" onclick="manualAddToCart()">+ เพิ่มรายการ</button>
     <button class="btn-finish" id="btnSubmit" onclick="openSummaryModal()">จบบิล</button>
   </div>
 
   <div style="margin-top: 14px; font-weight: bold; font-size: 15px;">
-    รายการในบิล (<span id="cart-count">0</span>/10)
+    รายการในบิล (<span id="cart-count">0</span> รายการ)
   </div>
   
   <table class="cart-table">
@@ -194,7 +123,6 @@
     <div class="summary-info"><b>สาขา:</b> <span id="history-branch">-</span></div>
     
     <div class="summary-list" id="history-items-container" style="max-height: 350px;">
-      <!-- ประวัติจะถูกโหลดมาใส่ที่นี่ -->
     </div>
     
     <button class="btn-close-modal" onclick="closeHistoryModal()">ปิดหน้าต่าง</button>
@@ -212,26 +140,32 @@
   const API_URL = "https://script.google.com/macros/s/AKfycbw8V1d7yMEoVUgVO4wvfpIwiABT7JuL3zhuDJEXeTMKP4IGOYScFEN2ArDeWPnLqRLwqA/exec";
 
   let cart = [];
-  let isScanning = false;
-  let scanHistory = [];
   const scannedCache = {};
-  let activeFetchBarcode = null;
-
-  let watchdogTimer = null;
-  let lastProcessedTime = 0;
-  let isRecovering = false;
-
-  // ตัวแปรสำหรับเก็บรายชื่อสาขาที่ได้จากระบบ
   let availableStores = [];
 
-  window.onload = function() { loadStoreList(); };
+  window.onload = function() { 
+    loadStoreList(); 
+    focusBarcodeScanner();
+
+    // ให้ช่องบาร์โค้ดแอ็กทีฟตลอดเวลา เพื่อรองรับการยิงสแกนต่อเนื่อง
+    document.addEventListener('click', function(e) {
+      if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
+        focusBarcodeScanner();
+      }
+    });
+  };
+
+  function focusBarcodeScanner() {
+    const input = document.getElementById('barcode-input');
+    if (input) input.focus();
+  }
   
   function loadStoreList() {
     fetch(`${API_URL}?action=getStores`)
       .then(res => res.json())
       .then(data => {
         if (data.stores) {
-          availableStores = data.stores; // บันทึกรายชื่อสาขาไว้ตรวจสอบ
+          availableStores = data.stores;
           const datalist = document.getElementById('branch-list');
           datalist.innerHTML = '';
           data.stores.forEach(store => {
@@ -244,397 +178,26 @@
       .catch(err => console.error("ไม่สามารถโหลดข้อมูลสาขาได้:", err));
   }
 
-  // ฟังก์ชันช่วยตรวจสอบความถูกต้องของชื่อสาขา
   function isBranchValid(branchName) {
     if (!branchName) return false;
     return availableStores.includes(branchName);
   }
 
-  function toggleScanner() {
-    if (isScanning) stopScanner();
-    else startScanner();
-  }
-
-  function startScanner() {
-    hidePhotoPreview();
-    const scannerBox = document.getElementById('scanner-box');
-    const btn = document.getElementById('btnToggleScan');
-
-    scannerBox.style.display = "block";
-    btn.innerText = "🛑 ปิดกล้อง";
-    btn.classList.add("active");
-    isScanning = true;
-
-    scanHistory = [];
-    lastProcessedTime = Date.now();
-
-    Quagga.init({
-      inputStream: {
-        name: "Live",
-        type: "LiveStream",
-        target: document.querySelector('#scanner-box'),
-        constraints: {
-          facingMode: "environment",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        area: { top: "15%", right: "5%", left: "5%", bottom: "15%" }
-      },
-      locator: { patchSize: "medium", halfSample: false },
-      numOfWorkers: navigator.hardwareConcurrency || 2,
-      decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader"], multiple: false },
-      locate: true
-    }, function(err) {
-      if (err) {
-        console.error("Quagga Init Error:", err);
-        handleScannerError();
-        return;
-      }
-      
-      try {
-        const track = Quagga.CameraAccess.getActiveTrack();
-        if (track && typeof track.getCapabilities === 'function') {
-          const caps = track.getCapabilities();
-          const constraintsToApply = {};
-
-          if (caps.focusMode && Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
-            constraintsToApply.focusMode = 'continuous';
-          }
-          if (caps.zoom) {
-            constraintsToApply.zoom = Math.min(1.3, caps.zoom.max);
-          }
-
-          if (Object.keys(constraintsToApply).length > 0) {
-            track.applyConstraints({ advanced: [constraintsToApply] }).catch(e => {
-              console.warn("ไม่สามารถปรับแต่งกล้องเพิ่มเติมได้:", e);
-            });
-          }
-        }
-      } catch (e) {
-        console.warn("เบราว์เซอร์ไม่รองรับ Advanced Track Settings");
-      }
-
-      Quagga.start();
-      startWatchdog();
-    });
-
-    Quagga.onDetected(onScanDetected);
-    Quagga.onProcessed(onFrameProcessed);
-  }
-
-  function stopScanner() {
-    stopWatchdog();
-    if (isScanning) {
-      try {
-        Quagga.offDetected(onScanDetected);
-        Quagga.offProcessed(onFrameProcessed);
-        Quagga.stop();
-      } catch(e) {}
-      isScanning = false;
-    }
-
-    document.getElementById('scanner-box').style.display = "none";
-    const btn = document.getElementById('btnToggleScan');
-    btn.innerText = "📷 Scan Barcode";
-    btn.classList.remove("active");
-  }
-
-  function handlePhotoUpload(input) {
-    if (!input.files || !input.files[0]) return;
-    if (isScanning) stopScanner();
-
-    const file = input.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-      const img = new Image();
-      img.onload = function() {
-        processAndDecodeImage(img);
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  async function processAndDecodeImage(img) {
-    const canvas = document.getElementById('photo-canvas');
-    const ctx = canvas.getContext('2d');
-    const previewBox = document.getElementById('photo-preview-box');
-
-    previewBox.classList.remove('error');
-
-    const MAX_WIDTH = 1200;
-    let width = img.width;
-    let height = img.height;
-
-    if (width > MAX_WIDTH) {
-      height = Math.round((height * MAX_WIDTH) / width);
-      width = MAX_WIDTH;
-    }
-
-    canvas.width = width;
-    canvas.height = height;
-
-    ctx.filter = 'none';
-    ctx.drawImage(img, 0, 0, width, height);
-
-    function drawGreenBoundingBox(box) {
-      ctx.strokeStyle = '#00FF00';
-      ctx.lineWidth = Math.max(6, Math.round(width / 100));
-      
-      if (box.x !== undefined) {
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
-      } else if (Array.isArray(box) && box.length > 0) {
-        ctx.beginPath();
-        ctx.moveTo(box[0].x, box[0].y);
-        for (let i = 1; i < box.length; i++) {
-          ctx.lineTo(box[i].x, box[i].y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-      }
-    }
-
-    function drawRedFrame() {
-      const strokeWidth = Math.max(8, Math.round(width / 50));
-      ctx.strokeStyle = '#FF0000';
-      ctx.lineWidth = strokeWidth;
-      ctx.strokeRect(strokeWidth / 2, strokeWidth / 2, width - strokeWidth, height - strokeWidth);
-    }
-
-    function handleNotFound() {
-      drawRedFrame();
-      previewBox.classList.add('error');
-      previewBox.style.display = 'block';
-
-      setTimeout(() => {
-        alert("⚠️ ไม่พบ Barcode โปรดถ่ายใหม่อีกครั้ง");
-        hidePhotoPreview();
-      }, 100);
-    }
-
-    if ('BarcodeDetector' in window) {
-      try {
-        const detector = new BarcodeDetector({
-          formats: ['ean_13', 'ean_8', 'code_128', 'upc_a', 'upc_e']
-        });
-        const barcodes = await detector.detect(canvas);
-        if (barcodes && barcodes.length > 0) {
-          const item = barcodes[0];
-          if (item.boundingBox) drawGreenBoundingBox(item.boundingBox);
-
-          previewBox.style.display = 'block';
-          onScanSuccess(item.rawValue.trim());
-          return;
-        }
-      } catch (err) {
-        console.warn("Native BarcodeDetector ถอยไปใช้ ZXing Engine:", err);
-      }
-    }
-
-    if (window.ZXing) {
-      try {
-        const codeReader = new ZXing.BrowserMultiFormatReader();
-        const result = await codeReader.decodeFromCanvas(canvas);
-        if (result && result.getText()) {
-          const points = result.getResultPoints();
-          if (points && points.length > 0) drawGreenBoundingBox(points);
-
-          previewBox.style.display = 'block';
-          onScanSuccess(result.getText().trim());
-          return;
-        }
-      } catch (err) {
-        console.warn("ZXing ถอดรหัสไม่สำเร็จ ถอยไปใช้ Quagga...", err);
-      }
-    }
-
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-
-    Quagga.decodeSingle({
-      src: dataUrl,
-      numOfWorkers: 0,
-      decoder: { readers: ["ean_reader", "code_128_reader", "upc_reader"] },
-      locate: true,
-      locator: { patchSize: "large", halfSample: false }
-    }, function(result) {
-      if (result && result.codeResult && result.codeResult.code) {
-        if (result.box) drawGreenBoundingBox(result.box);
-
-        previewBox.style.display = 'block';
-        onScanSuccess(result.codeResult.code.trim());
-      } else {
-        handleNotFound();
-      }
-    });
-  }
-
-  function hidePhotoPreview() {
-    const previewBox = document.getElementById('photo-preview-box');
-    previewBox.style.display = 'none';
-    previewBox.classList.remove('error');
-  }
-
-  function onFrameProcessed(result) {
-    lastProcessedTime = Date.now();
-  }
-
-  function startWatchdog() {
-    stopWatchdog();
-    watchdogTimer = setInterval(() => {
-      if (isScanning && !isRecovering) {
-        const timeDiff = Date.now() - lastProcessedTime;
-        if (timeDiff > 3000) {
-          restartScannerAuto();
-        }
-      }
-    }, 1500);
-  }
-
-  function stopWatchdog() {
-    if (watchdogTimer) {
-      clearInterval(watchdogTimer);
-      watchdogTimer = null;
-    }
-  }
-
-  function handleScannerError() {
-    if (isRecovering) return;
-    document.getElementById('scanner-hint').innerText = "🔄 กำลังรีเซ็ตระบบกล้อง...";
-    restartScannerAuto();
-  }
-
-  function restartScannerAuto() {
-    if (isRecovering) return;
-    isRecovering = true;
-    
-    try {
-      Quagga.offDetected(onScanDetected);
-      Quagga.offProcessed(onFrameProcessed);
-      Quagga.stop();
-    } catch(e) {}
-
-    setTimeout(() => {
-      isRecovering = false;
-      if (isScanning) {
-        startScanner();
-      }
-    }, 500);
-  }
-
-  function onScanDetected(result) {
-    if (result && result.codeResult && result.codeResult.code) {
-      let barcodeText = result.codeResult.code.trim();
-
-      if (barcodeText.length === 13 && /^\d+$/.test(barcodeText)) {
-        scanHistory.push(barcodeText);
-        if (scanHistory.length > 5) scanHistory.shift();
-
-        const counts = {};
-        scanHistory.forEach(code => { counts[code] = (counts[code] || 0) + 1; });
-
-        if (counts[barcodeText] >= 3) {
-          Quagga.offDetected(onScanDetected);
-          onScanSuccess(barcodeText);
-        }
-      }
-    }
-  }
-
-  function onScanSuccess(barcodeText) {
-    stopScanner();
-    document.getElementById('barcode-input').value = barcodeText;
-    if (navigator.vibrate) navigator.vibrate(200);
-    
-    previewBarcodeInfo(barcodeText);
-  }
-
+  // เมื่อเครื่องสแกนยิงข้อมูลเข้ามาแล้วส่ง Enter
   function handleInputBarcodeKeyDown(event) {
     if (event.key === 'Enter' || event.keyCode === 13) {
       event.preventDefault();
       const barcodeText = event.target.value.trim();
       if (barcodeText) {
-        previewBarcodeInfo(barcodeText);
-      } else {
-        updateInfoDisplay('-', '-');
-        activeFetchBarcode = null;
+        addBarcodeToCartImmediate(barcodeText, 1);
+        event.target.value = ''; // เคลียร์ช่องเพื่อรอสแกนชิ้นถัดไป
       }
+      focusBarcodeScanner();
     }
   }
 
-  function handleInputBarcodeBlur(value) {
-    const barcodeText = value.trim();
-    if (barcodeText && barcodeText !== activeFetchBarcode) {
-      previewBarcodeInfo(barcodeText);
-    } else if (!barcodeText) {
-      updateInfoDisplay('-', '-');
-      activeFetchBarcode = null;
-    }
-  }
-
-  function previewBarcodeInfo(barcode) {
-    if (scannedCache[barcode]) {
-      const res = scannedCache[barcode];
-      if (res.found) {
-        updateInfoDisplay(res.sku || '-', res.product || 'ไม่ระบุชื่อ');
-      } else {
-        updateInfoDisplay('ไม่พบ', '⚠️ ไม่พบข้อมูล');
-      }
-      return;
-    }
-
-    updateInfoDisplay('⏳...', '⏳ กำลังดึงข้อมูล...');
-    activeFetchBarcode = barcode;
-
-    fetch(`${API_URL}?action=getProduct&barcode=${encodeURIComponent(barcode)}`)
-      .then(res => res.json())
-      .then(res => {
-        scannedCache[barcode] = res;
-        const currentInput = document.getElementById('barcode-input').value.trim();
-        if (currentInput === barcode) {
-          if (res && res.found) {
-            updateInfoDisplay(res.sku || '-', res.product || 'ไม่ระบุชื่อ');
-          } else {
-            updateInfoDisplay('ไม่พบ', '⚠️ ไม่พบข้อมูล');
-          }
-        }
-      })
-      .catch(err => {
-        const currentInput = document.getElementById('barcode-input').value.trim();
-        if (currentInput === barcode) {
-          updateInfoDisplay('Error', '⚠️ เกิดข้อผิดพลาดในการโหลด');
-        }
-      });
-  }
-
-  function manualAddToCart() {
-    const barcodeText = document.getElementById('barcode-input').value.trim();
-    if (!barcodeText) {
-      alert("กรุณากรอกหรือสแกนบาร์โค้ด");
-      return;
-    }
-    const qty = parseInt(document.getElementById('qty-input').value) || 1;
-    
-    addBarcodeToCartImmediate(barcodeText, qty);
-    
-    document.getElementById('barcode-input').value = '';
-    document.getElementById('qty-input').value = '1';
-    updateInfoDisplay('-', '-');
-    activeFetchBarcode = null;
-  }
-
-  function updateInfoDisplay(sku, product) {
-    document.getElementById('display-sku').innerText = sku || '-';
-    document.getElementById('display-product').innerText = product || '-';
-  }
-
+  // เพิ่มสินค้าเข้าบิลทันทีเมื่อสแกน
   function addBarcodeToCartImmediate(barcode, qty) {
-    if (cart.length >= 10) { 
-      alert("เพิ่มได้สูงสุด 10 รายการต่อบิล"); 
-      return; 
-    }
-
     const existingIndex = cart.findIndex(item => item.barcode === barcode);
     if (existingIndex > -1) {
       cart[existingIndex].quantity += qty;
@@ -754,44 +317,22 @@
     renderCart();
   }
 
-  function changeQty(delta) {
-    const qtyInput = document.getElementById('qty-input');
-    let currentVal = parseInt(qtyInput.value) || 1;
-    let newVal = currentVal + delta;
-    if (newVal < 1) newVal = 1;
-    qtyInput.value = newVal;
-  }
-
-  function handleQtyFocus(input) {
-    input.dataset.oldValue = input.value;
-    input.value = '';
-  }
-
-  function handleQtyBlur(input) {
-    if (input.value.trim() === '' || parseInt(input.value) <= 0) {
-      input.value = input.dataset.oldValue && parseInt(input.dataset.oldValue) > 0 ? input.dataset.oldValue : '1';
-    }
-  }
-
   /* 📌 Modal สรุปรายการ */
   function openSummaryModal() {
     const branch = document.getElementById('branch-input').value.trim();
     
-    // 1. ตรวจสอบช่องกรอกสาขา ถ้าว่างอยู่
     if (!branch) {
       alert("กรุณากรอกสาขา");
       return;
     }
 
-    // 2. ถ้าไม่ว่าง แต่ไม่เจอสาขา
     if (!isBranchValid(branch)) {
       alert("ไม่พบสาขาที่ระบุ กรุณาตรวจสอบชื่อสาขาอีกครั้ง");
       return;
     }
 
-    // 3. ตรวจสอบ Barcode ในบิล
     if (cart.length === 0) { 
-      alert("กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ"); 
+      alert("กรุณาสแกนสินค้าอย่างน้อย 1 รายการ"); 
       return; 
     }
 
@@ -801,7 +342,7 @@
     }
     
     if (cart.some(item => item.error)) {
-      alert("กรุณาตรวจสอบ Barcode");
+      alert("กรุณาตรวจสอบ Barcode ที่ไม่ถูกต้องก่อนจบบิล");
       return;
     }
 
@@ -831,13 +372,13 @@
 
   function closeSummaryModal() {
     document.getElementById('summaryModal').style.display = 'none';
+    focusBarcodeScanner();
   }
 
   /* 📌 Modal ประวัติการขายวันนี้ */
   function openHistoryModal() {
     const branch = document.getElementById('branch-input').value.trim();
     
-    // ตรวจสอบช่องกรอกสาขา
     if (!branch) {
       alert("กรุณากรอกสาขา");
       return;
@@ -899,34 +440,14 @@
 
   function closeHistoryModal() {
     document.getElementById('historyModal').style.display = 'none';
+    focusBarcodeScanner();
   }
 
   function submitBill() {
     const branch = document.getElementById('branch-input').value.trim();
     
-    // 1. ตรวจสอบช่องกรอกสาขา
-    if (!branch) {
-      alert("กรุณากรอกสาขา");
-      closeSummaryModal();
-      return;
-    }
-
-    // 2. ตรวจสอบความถูกต้องของสาขา
-    if (!isBranchValid(branch)) {
-      alert("ไม่พบสาขาที่ระบุ กรุณาตรวจสอบชื่อสาขาอีกครั้ง");
-      closeSummaryModal();
-      return;
-    }
-
-    // 3. ตรวจสอบ Barcode ในบิลก่อนกดบันทึก
-    if (cart.length === 0) {
-      alert("กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ");
-      closeSummaryModal();
-      return;
-    }
-
-    if (cart.some(item => item.error)) {
-      alert("กรุณาตรวจสอบ Barcode");
+    if (!branch || !isBranchValid(branch) || cart.length === 0 || cart.some(item => item.error)) {
+      alert("ข้อมูลไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง");
       closeSummaryModal();
       return;
     }
@@ -952,9 +473,8 @@
       if (res.success) {
         alert(`บันทึกเรียบร้อย!\nเลขที่บิล: ${res.billId}`);
         cart = [];
-        updateInfoDisplay('-', '-');
         renderCart();
-        hidePhotoPreview();
+        focusBarcodeScanner();
       } else {
         alert("เกิดข้อผิดพลาดจากเซิร์ฟเวอร์: " + res.error);
       }
