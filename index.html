@@ -20,7 +20,10 @@
     .form-group { margin-bottom: 12px; }
     label { font-weight: bold; font-size: 15px; color: #1a202c; display: block; margin-bottom: 4px; }
     
-    input[type="text"], input[type="number"] { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px !important; outline: none; }
+    input[type="text"] { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 16px !important; outline: none; }
+
+    /* ซ่อนช่องรับค่าบาร์โค้ดไม่ให้เห็นบนหน้าจอ */
+    .hidden-barcode-input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 
     .action-buttons { display: flex; gap: 8px; margin-top: 14px; }
     .btn-finish { flex: 1; background: #38a169; color: white; border: none; padding: 14px; border-radius: 6px; font-size: 18px; font-weight: bold; cursor: pointer; }
@@ -64,13 +67,13 @@
   </div>
   
   <div class="form-group">
-    <label for="branch-input">ชื่อรายการ:</label>
-    <input type="text" id="branch-input" list="branch-list" placeholder="-- กรอกชื่อรายการ --">
+    <label for="branch-input">สาขา:</label>
+    <input type="text" id="branch-input" list="branch-list" placeholder="-- กรอกสาขา --">
     <datalist id="branch-list"></datalist>
   </div>
 
-  <!-- ช่องอินพุตรับค่าบาร์โค้ดแบบซ่อนแป้นพิมพ์ -->
-  <input type="text" id="barcode-input" placeholder="Barcode" inputmode="none" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)" style="opacity: 0.8;">
+  <!-- ซ่อนช่องนี้ไว้เพื่อใช้รับค่าจากปืนสแกนบาร์โค้ดเท่านั้น -->
+  <input type="text" id="barcode-input" class="hidden-barcode-input" autocomplete="off" onkeydown="handleInputBarcodeKeyDown(event)">
 
   <div style="margin-top: 14px; font-weight: bold; font-size: 15px;">
     รายการในบิล (<span id="cart-count">0</span> รายการ)
@@ -89,7 +92,6 @@
     <tbody id="cart-list"></tbody>
   </table>
 
-  <!-- ปุ่มจบบิล ล่างสุด -->
   <div class="action-buttons">
     <button class="btn-finish" id="btnSubmit" onclick="openSummaryModal()">จบบิล</button>
   </div>
@@ -142,7 +144,6 @@
     loadStoreList(); 
     focusBarcodeScanner();
 
-    // ดึง Focus คืนอัตโนมัติหากกดคลิกส่วนอื่นบนหน้าจอ
     document.addEventListener('click', function(e) {
       if (e.target.id !== 'branch-input') {
         focusBarcodeScanner();
@@ -150,7 +151,6 @@
     });
   };
 
-  // ดักจับสัญญาณการยิงสแกนเนอร์ระดับ Global (สแกนได้ทันที ไม่ต้องกดช่องข้อความ)
   document.addEventListener('keydown', function(e) {
     const summaryModalVisible = document.getElementById('summaryModal').style.display === 'flex';
     const historyModalVisible = document.getElementById('historyModal').style.display === 'flex';
@@ -338,7 +338,6 @@
     renderCart();
   }
 
-  /* 📌 Modal สรุปรายการ */
   function openSummaryModal() {
     const branch = document.getElementById('branch-input').value.trim();
     
@@ -396,7 +395,6 @@
     focusBarcodeScanner();
   }
 
-  /* 📌 Modal ประวัติการขายวันนี้ */
   function openHistoryModal() {
     const branch = document.getElementById('branch-input').value.trim();
     
